@@ -146,6 +146,101 @@ preflight or CI:
 scripts/bd-plan-ref-lint.sh --quiet || exit 1
 ```
 
+### Beads must stand alone — required completeness
+
+**Every bead MUST be written for a naive but competent junior
+developer.** Assume that developer can write the language, run the
+standard toolchain, and read anything checked into the repo —
+`AGENTS.md`, `README.md`, the `Makefile`, the source tree. Do **not**
+assume they have read the plan doc, prior beads, or any conversation
+that led to this bead being filed. The bead must remove all ambiguity
+about scope and required work: if a competent reader could plausibly
+interpret the description two different ways, the bead is not ready.
+
+The `--description="..."` must contain enough context that such a
+developer could execute the task end-to-end **without consulting a
+senior developer, the plan doc, other beads, or any out-of-band
+knowledge**. The mandatory `Plan: plans/<doc>.md §N` reference is for
+*traceability* (where did this work originate), not *delegation* (go
+read the plan to figure out what to do).
+
+A junior developer reading the bead in isolation must already know:
+
+- **What to do** — concrete files, packages, functions, or commands
+  to create or modify. Name them.
+- **Why** — the user-visible behavior, constraint, or design rule
+  this serves. One or two sentences.
+- **How to verify** — the test, command, or observable result that
+  proves the work is done. This is reinforced by the mandatory
+  `--acceptance="..."` flag but should also appear in the
+  description in everyday terms.
+- **Edge cases and pitfalls** — non-obvious constraints a careful
+  reader could still miss. Examples: "preserve the exact exported
+  function signature so existing callers compile unchanged"; "the
+  stub is allowed to return a `not implemented` error at runtime but
+  must still compile under all supported targets."
+- **Project-specific terminology** — if the bead uses a term that
+  only makes sense in context (a milestone name, a pattern coined in
+  the plan, an internal package nickname), explain it inline or
+  paraphrase the relevant plan passage. Do not assume the reader
+  will follow the `Plan:` link.
+
+For richer descriptions, use a heredoc on `--description` so the
+required context fits comfortably:
+
+```bash
+bd create \
+  --title="..." \
+  --description="$(cat <<'EOF'
+Plan: plans/<doc>.md §N (section title).
+
+WHAT TO DO
+...
+
+WHY
+...
+
+HOW TO VERIFY
+...
+
+EDGE CASES AND PITFALLS
+...
+
+PROJECT-SPECIFIC TERMINOLOGY
+...
+EOF
+)" \
+  --acceptance="..." \
+  --type=feature --priority=2
+```
+
+If you cannot write a description at that level of completeness,
+the bead is not ready to file. Either the underlying plan section
+is too thin (fix the plan first), or the work needs to be split
+into smaller beads that *are* individually self-explanatory.
+
+This rule applies equally to follow-up beads created via
+`discovered-from` linkage — a bead filed mid-implementation must
+still stand alone, because whoever picks it up next won't have
+the discovering session's context.
+
+### Scope a bead to one logical unit of work
+
+A bead covers **one** subsection of the system, not a mixed bag.
+Examples of correctly-scoped units:
+
+- one page's UI update
+- one API endpoint (or one cohesive set of changes to one endpoint)
+- one DB migration
+- one module's interface refactor
+- one parallel-package implementation
+
+If a bead touches two unrelated subsystems, requires two independent
+acceptance criteria, or has a description that reads "...and then
+also...", it should be split. Scope is bounded by the work, not by a
+line count — a single change that genuinely needs five pitfalls
+documented is still one bead.
+
 ## Use Makefile targets
 
 **ALWAYS use Makefile targets** when one exists for the task you're
