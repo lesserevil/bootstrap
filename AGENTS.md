@@ -64,20 +64,27 @@ Project docs are split across two top-level directories. Pick the
 right one when adding new docs.
 
 - **`docs/`** — *user-facing documentation*. Setup guides,
-  troubleshooting, operator how-tos, public API references. Anything
-  someone reading the project to learn how to **use** it would want.
+  troubleshooting, operator how-tos, **administration guides**,
+  **runbooks**, **on-call procedures**, public API references.
+  Anything someone reading the project to learn how to **use**,
+  **operate**, or **administer** it would want. "User" here means
+  *any* consumer of the project — end users, operators,
+  administrators, and on-call responders alike. Administration docs
+  and runbooks are user docs and **MUST** live in `docs/`, never in
+  `plans/`.
 
 - **`plans/`** — *design / implementation documentation*.
   Architecture notes, proposed-but-not-yet-shipped features, internal
   mechanism inventories, experimental design records. Anything
   someone reading the project to learn how it **works inside**, or
-  how it **might work in the future**, would want.
+  how it **might work in the future**, would want. Runbooks are
+  *not* design docs even when they explain internals — if the doc
+  tells someone what to *do*, it belongs in `docs/`.
 
 Quick test: if the doc tells the reader "what to do with this
-project," it goes in `docs/`. If it tells them "what this project
-does inside, or what it should do," it goes in `plans/`. When in
-doubt, lean toward `plans/` — user-facing docs are rare; design docs
-are common.
+project" (use it, operate it, administer it, respond to an
+incident), it goes in `docs/`. If it tells them "what this project
+does inside, or what it should do," it goes in `plans/`.
 
 ### Diagrams: Mermaid only
 
