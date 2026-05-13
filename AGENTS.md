@@ -43,6 +43,9 @@ Numeric values only — not "high"/"medium"/"low".
 
 ## Documentation must match code
 
+**User docs are part of the contract: they MUST always accurately
+describe current behavior. Drift is a bug.**
+
 **Every commit that changes user-visible behavior must update the
 user docs in the same commit.** Do not land code changes that make
 the docs inaccurate.
