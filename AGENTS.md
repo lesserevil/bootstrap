@@ -356,7 +356,7 @@ Work is NOT complete until `git push` succeeds.
 4. **PUSH TO REMOTE** — This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync          # use `bd dolt push` if this project uses the dolt backend
+   bd dolt push     # dolt is bd's default storage backend
    git push
    git status       # MUST show "up to date with origin"
    ```
@@ -416,6 +416,3 @@ want to diverge.
    a separate methodology doc (design-first pipeline, when each
    workflow step applies). Otherwise the pointer at the top of this
    file is a no-op.
-10. **Opt-in: `bd dolt push`** — If this project uses the dolt
-    backend for bd, change `bd sync` → `bd dolt push` in the
-    session-completion block. Default is `bd sync`.
