@@ -18,10 +18,9 @@ you adapt it to your project.
 
 2. **Run `make init`.** Idempotent — safe to re-run.
    - `git init` (if the directory isn't already a git repo)
-   - checks that `bd` (beads) is installed and on `PATH` — errors
+   - checks that `beans` is installed and on `PATH` — errors
      out with an install pointer if not
-   - `bd init` (creating `.beads/`)
-   - points `bd`'s sync remote at git's `origin`, if `origin` is set
+   - `beans init` (creating `.beans/` and `.beans.yml`)
 
 3. **Ask an agent to customize the repo.** Point your agent at
    `AGENTS.md` § *Customize per project* — that section enumerates

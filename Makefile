@@ -15,10 +15,10 @@ help: ## Show this help.
 
 # ─── Bootstrap ────────────────────────────────────────────────────
 # `make init` brings a fresh checkout into a working state: git
-# repo, beads issue tracker, and a link between the two. Each step
-# is idempotent — running `make init` again is safe.
+# repo and Beans issue tracker. Each step is idempotent — running
+# `make init` again is safe.
 
-init: ## Initialize repo: git init, ensure bd installed, bd init, link bd to git origin.
+init: ## Initialize repo: git init, ensure beans installed, beans init.
 	@set -e; \
 	if [ ! -d .git ]; then \
 		echo "[init] git init"; \
@@ -26,26 +26,20 @@ init: ## Initialize repo: git init, ensure bd installed, bd init, link bd to git
 	else \
 		echo "[init] git: already initialized"; \
 	fi; \
-	if ! command -v bd >/dev/null 2>&1; then \
-		echo "[init] bd (beads) not found on PATH."; \
-		echo "       Install bd and ensure it is on PATH, then re-run 'make init'."; \
-		echo "       See your beads distribution for install instructions."; \
+	if ! command -v beans >/dev/null 2>&1; then \
+		echo "[init] beans not found on PATH."; \
+		echo "       Install Beans and ensure it is on PATH, then re-run 'make init'."; \
+		echo "       Homebrew: brew install hmans/beans/beans"; \
+		echo "       Go:       go install github.com/hmans/beans@latest"; \
 		exit 1; \
 	else \
-		echo "[init] bd: $$(command -v bd)"; \
+		echo "[init] beans: $$(command -v beans)"; \
 	fi; \
-	if [ ! -d .beads ]; then \
-		echo "[init] bd init"; \
-		bd init; \
+	if [ ! -d .beans ] || [ ! -f .beans.yml ]; then \
+		echo "[init] beans init"; \
+		beans init; \
 	else \
-		echo "[init] bd: already initialized (.beads/ present)"; \
-	fi; \
-	if git remote get-url origin >/dev/null 2>&1; then \
-		url=$$(git remote get-url origin); \
-		echo "[init] bd config set sync.remote git+$$url"; \
-		bd config set sync.remote "git+$$url"; \
-	else \
-		echo "[init] git has no 'origin' remote; skipping bd sync.remote"; \
+		echo "[init] beans: already initialized (.beans/ and .beans.yml present)"; \
 	fi
 
 # ─── Quality gates ────────────────────────────────────────────────

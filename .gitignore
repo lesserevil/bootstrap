@@ -48,11 +48,3 @@ vendor/
 
 # ─── Logs ─────────────────────────────────────────────────────────
 *.log
-
-# ─── Beads ────────────────────────────────────────────────────────
-# Keep .beads/issues.jsonl (the canonical export) under version
-# control; ignore the local SQLite DB and its sidecar files.
-.beads/*.db
-.beads/*.db-journal
-.beads/*.db-wal
-.beads/*.db-shm
