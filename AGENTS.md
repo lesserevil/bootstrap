@@ -5,45 +5,77 @@ in this repo: issue tracking, doc sync, the test/quality gates, and
 session-close protocol. Read it before starting non-trivial work.
 
 > If a `CONTRIBUTING.md` exists, that's the methodology source of
-> truth (requirements → design ⇄ tests ⇄ code → verification) and
-> takes precedence on workflow questions. This file enforces
+> truth (requirements -> design <-> tests <-> code -> verification)
+> and takes precedence on workflow questions. This file enforces
 > consistency once code is being written.
 
-## Issue Tracking with Beans
+## Issue Tracking with Backlog.md
 
-This project uses **Beans** for ALL task tracking. Run
-`beans prime` to load full workflow context and commands before
-starting non-trivial work.
+This project uses **Backlog.md** for ALL task tracking. Backlog.md
+stores project work as Markdown files in the repo and should be
+managed through its MCP tools or CLI, not by hand-editing task files.
+
+Use the Backlog.md version from:
+
+```text
+https://github.com/lesserevil/Backlog.md
+```
 
 ### Quick reference
 
-```bash
-beans prime              # Load agent workflow instructions
-beans list --json --ready # Find available work
-beans show --json <id>   # View issue details
-beans update --json <id> -s in-progress  # Claim work
-beans update --json <id> -s completed    # Complete work
+Prefer MCP tools when the client provides them:
+
+```text
+get_backlog_instructions overview
+task_search / task_list
+task_view <id>
+task_create
+task_edit
 ```
+
+Use the CLI when MCP tools are not available:
+
+```bash
+backlog task list --plain --status "To Do"       # Find available work
+backlog search "query" --plain                   # Search existing work
+backlog task <id> --plain                        # View task details
+backlog task create "Title" --status "To Do"     # Create tracked work
+backlog task edit <id> --status "In Progress"    # Claim work
+backlog task edit <id> --status "Done"           # Mark work done
+```
+
+When using this bootstrap template itself, `make init` runs Backlog.md
+through Bun from `github:lesserevil/Backlog.md` so the requested fork
+is used even before a global `backlog` command exists.
 
 ### Rules
 
-- ✅ Use `beans` for ALL task tracking
-- ✅ Run `beans prime` and heed its current workflow guidance
-- ✅ Use `beans list`, `beans show`, `beans create`, and
-  `beans update` with `--json` for machine-readable output
-- ✅ Link dependent work with `--parent`, `--blocking`, or
-  `--blocked-by` relationships where appropriate
-- ❌ Do NOT use TodoWrite, TaskCreate, or standalone markdown TODO
-  lists outside Beans
-- ❌ Do NOT use `MEMORY.md` files -- they fragment across accounts
-- ❌ Do NOT use commands that open `$EDITOR`; prefer non-interactive
-  `beans` commands and flags
+- Use Backlog.md for ALL task tracking.
+- At the beginning of non-trivial work, load the Backlog.md workflow
+  guidance. With MCP, call `get_backlog_instructions` for the
+  overview. With CLI-only access, run `backlog --help` and inspect
+  the current task commands before filing or changing work.
+- Search for existing work before creating a new task.
+- Use `task_create` / `task_edit` MCP tools when available. If using
+  CLI, prefer `backlog task create`, `backlog task edit`,
+  `backlog task list --plain`, `backlog search --plain`, and
+  `backlog task <id> --plain` for machine-readable output.
+- Link dependent work with parent tasks or dependencies where
+  appropriate.
+- Do NOT use TodoWrite, TaskCreate, or standalone markdown TODO
+  lists outside Backlog.md.
+- Do NOT use `MEMORY.md` files -- they fragment across accounts.
+- Do NOT use commands that open `$EDITOR`; prefer non-interactive
+  Backlog.md commands and flags.
+- Do NOT edit task files directly. Use Backlog.md MCP tools or CLI so
+  metadata, relationships, and history stay consistent.
 
 ### Priorities
 
-Use the priority names configured by Beans and shown by
-`beans prime` or `beans help`. Do not assume numeric priority
-values.
+Use the priority names configured by Backlog.md and shown by
+`backlog task create --help`, `backlog task edit --help`, or the MCP
+task schema. Do not assume project-specific priority names beyond
+what the tool reports.
 
 ## Documentation must match code
 
@@ -67,22 +99,22 @@ User-visible surfaces that trigger doc updates:
 Project docs are split across two top-level directories. Pick the
 right one when adding new docs.
 
-- **`docs/`** — *user-facing documentation*. Setup guides,
+- **`docs/`** -- *user-facing documentation*. Setup guides,
   troubleshooting, operator how-tos, **administration guides**,
   **runbooks**, **on-call procedures**, public API references.
   Anything someone reading the project to learn how to **use**,
   **operate**, or **administer** it would want. "User" here means
-  *any* consumer of the project — end users, operators,
+  *any* consumer of the project -- end users, operators,
   administrators, and on-call responders alike. Administration docs
   and runbooks are user docs and **MUST** live in `docs/`, never in
   `plans/`.
 
-- **`plans/`** — *design / implementation documentation*.
+- **`plans/`** -- *design / implementation documentation*.
   Architecture notes, proposed-but-not-yet-shipped features, internal
   mechanism inventories, experimental design records. Anything
   someone reading the project to learn how it **works inside**, or
   how it **might work in the future**, would want. Runbooks are
-  *not* design docs even when they explain internals — if the doc
+  *not* design docs even when they explain internals -- if the doc
   tells someone what to *do*, it belongs in `docs/`.
 
 Quick test: if the doc tells the reader "what to do with this
@@ -95,41 +127,44 @@ does inside, or what it should do," it goes in `plans/`.
 When creating diagrams in documentation, **always use Mermaid**
 (```mermaid code blocks). Never use ASCII art diagrams.
 
-## Plans → beans → code → plan-complete
+## Plans -> Backlog.md tasks -> code -> plan-complete
 
 All non-trivial work follows this loop:
 
 1. **Update the plan doc.** Edit (or create) the relevant
    `plans/*.md` to capture the design change. The plan **MUST
-   include an explicit "Acceptance Criteria" section** — a testable,
+   include an explicit "Acceptance Criteria" section** -- a testable,
    enumerated definition of what "this plan is complete" means. If
    you cannot write that section, the plan isn't ready and you
-   should not create beans against it yet.
+   should not create tasks against it yet.
 
-2. **Generate beans from the plan.** Break the plan into
-   `beans create` work items. Every bean **MUST reference its plan doc**
-   in the body (path + section, e.g.
-   `Plan: plans/feature-x-plan.md §5 Data Channel Protocol`).
-   Mirror the relevant acceptance criterion in the bean body.
+2. **Generate Backlog.md tasks from the plan.** Break the plan into
+   `backlog task create` work items, or use the Backlog.md MCP
+   `task_create` tool. Every task **MUST reference its plan doc** in
+   its description or documentation field (path + section, e.g.
+   `Plan: plans/feature-x-plan.md §5 Data Channel Protocol`). Mirror
+   the relevant acceptance criterion in the task's acceptance
+   criteria.
 
-3. **Agents claim and execute.** Standard `beans list --json --ready` →
-   `beans update <id> -s in-progress` → implement →
-   `beans update <id> -s completed` cycle. Code commits update the
-   plan doc in the same commit when behavior shifts.
+3. **Agents claim and execute.** Standard flow is:
+   search/list ready work -> view task details -> set the task to
+   `In Progress` -> implement -> verify -> set the task to `Done`.
+   Code commits update the plan doc in the same commit when behavior
+   shifts.
 
 4. **Close the plan when criteria are met.** A plan is **not**
-   complete just because all its beans closed — the acceptance
-   criteria are the gate. Once every bean is closed AND every
+   complete just because its tasks are done -- the acceptance
+   criteria are the gate. Once every task is done AND every
    acceptance item is demonstrably satisfied, mark the plan complete
    (status header or `Status: Complete` line at the top).
 
-### Acceptance criteria — required shape
+### Acceptance criteria -- required shape
 
 ```markdown
 ## Acceptance Criteria
 
 - [ ] CRIT-1: <testable claim, e.g. "Native client round-trips
-      text/plain clipboard updates with echo suppression — covered
+      text/plain clipboard updates with echo suppression -- covered
       by `loop_guard_swallows_just_applied` and the loopback
       integration test in `tests/e2e`.">
 - [ ] CRIT-2: ...
@@ -139,108 +174,95 @@ Each item must be testable (a passing test, a CLI invocation with
 expected output, a manual procedure with a clear pass/fail). Vague
 criteria ("works well", "is robust") do not count.
 
-### Beans → plan linkage — required shape
+### Backlog.md task -> plan linkage -- required shape
 
 ```bash
-beans create "Implement CBOR clipboard envelope on native client" \
-  --type feature \
-  --status todo \
-  --priority normal \
-  --body "Plan: plans/clipboard-sync-plan.md §5. Replaces the simplified ClipboardMessage with the ClipboardUpdate/Request/Clear/Chunk envelope.
+backlog task create "Implement CBOR clipboard envelope on native client" \
+  --status "To Do" \
+  --priority high \
+  --doc plans/clipboard-sync-plan.md \
+  --description "$(cat <<'EOF'
+Plan: plans/clipboard-sync-plan.md §5. Replaces the simplified ClipboardMessage with the ClipboardUpdate/Request/Clear/Chunk envelope.
 
-Acceptance: CRIT-3 from plan: native client emits and accepts ClipboardUpdate with seq numbers; loopback e2e test passes."
+WHAT TO DO
+Implement the native client clipboard envelope while preserving the existing public command surface.
+
+WHY
+This keeps clipboard sync behavior consistent across native and web clients.
+
+HOW TO VERIFY
+Run the native unit tests and the loopback integration test in tests/e2e.
+
+EDGE CASES AND PITFALLS
+Preserve echo suppression and sequence-number handling.
+EOF
+)" \
+  --ac "Native client emits and accepts ClipboardUpdate with seq numbers." \
+  --ac "Loopback e2e test passes."
 ```
 
-The `Plan:` line in the body is mandatory. Beans carrying
+The `Plan:` line or documentation field is mandatory. Tasks carrying
 one of the exemption labels skip the requirement: `infra`,
 `tooling`, `meta`, `no-plan-required`.
 
-If this project ships `scripts/beans-plan-ref-lint.sh`, wire it into
-preflight or CI:
+If this project ships `scripts/backlog-plan-ref-lint.sh`, wire it
+into preflight or CI:
 
 ```bash
-scripts/beans-plan-ref-lint.sh --quiet || exit 1
+scripts/backlog-plan-ref-lint.sh --quiet || exit 1
 ```
 
-### Beans must stand alone — required completeness
+### Backlog.md tasks must stand alone -- required completeness
 
-**Every bean MUST be written for a naive but competent junior
+**Every task MUST be written for a naive but competent junior
 developer.** Assume that developer can write the language, run the
-standard toolchain, and read anything checked into the repo —
+standard toolchain, and read anything checked into the repo --
 `AGENTS.md`, `README.md`, the `Makefile`, the source tree. Do **not**
-assume they have read the plan doc, prior beans, or any conversation
-that led to this bean being filed. The bean must remove all ambiguity
+assume they have read the plan doc, prior tasks, or any conversation
+that led to this task being filed. The task must remove all ambiguity
 about scope and required work: if a competent reader could plausibly
-interpret the body two different ways, the bean is not ready.
+interpret the body two different ways, the task is not ready.
 
-The bean body must contain enough context that such a
-developer could execute the task end-to-end **without consulting a
-senior developer, the plan doc, other beans, or any out-of-band
-knowledge**. The mandatory `Plan: plans/<doc>.md §N` reference is for
-*traceability* (where did this work originate), not *delegation* (go
-read the plan to figure out what to do).
+The task body must contain enough context that such a developer could
+execute the task end-to-end **without consulting a senior developer,
+the plan doc, other tasks, or any out-of-band knowledge**. The
+mandatory `Plan: plans/<doc>.md §N` reference is for *traceability*
+(where did this work originate), not *delegation* (go read the plan
+to figure out what to do).
 
-A junior developer reading the bean in isolation must already know:
+A junior developer reading the task in isolation must already know:
 
-- **What to do** — concrete files, packages, functions, or commands
+- **What to do** -- concrete files, packages, functions, or commands
   to create or modify. Name them.
-- **Why** — the user-visible behavior, constraint, or design rule
+- **Why** -- the user-visible behavior, constraint, or design rule
   this serves. One or two sentences.
-- **How to verify** — the test, command, or observable result that
+- **How to verify** -- the test, command, or observable result that
   proves the work is done. This should appear in the body in
   everyday terms.
-- **Edge cases and pitfalls** — non-obvious constraints a careful
+- **Edge cases and pitfalls** -- non-obvious constraints a careful
   reader could still miss. Examples: "preserve the exact exported
   function signature so existing callers compile unchanged"; "the
   stub is allowed to return a `not implemented` error at runtime but
   must still compile under all supported targets."
-- **Project-specific terminology** — if the bean uses a term that
+- **Project-specific terminology** -- if the task uses a term that
   only makes sense in context (a milestone name, a pattern coined in
   the plan, an internal package nickname), explain it inline or
   paraphrase the relevant plan passage. Do not assume the reader
   will follow the `Plan:` link.
 
-For richer bodies, use a heredoc on `--body` so the
-required context fits comfortably:
+If you cannot write a body at that level of completeness, the task
+is not ready to file. Either the underlying plan section is too thin
+(fix the plan first), or the work needs to be split into smaller
+tasks that are individually self-explanatory.
 
-```bash
-beans create "..." \
-  --type task \
-  --status todo \
-  --body "$(cat <<'EOF'
-Plan: plans/<doc>.md §N (section title).
+This rule applies equally to follow-up tasks created through the
+current Backlog.md relationship flags -- a task filed
+mid-implementation must still stand alone, because whoever picks it
+up next won't have the discovering session's context.
 
-WHAT TO DO
-...
+### Scope a Backlog.md task to one logical unit of work
 
-WHY
-...
-
-HOW TO VERIFY
-...
-
-EDGE CASES AND PITFALLS
-...
-
-PROJECT-SPECIFIC TERMINOLOGY
-...
-EOF
-)"
-```
-
-If you cannot write a body at that level of completeness,
-the bean is not ready to file. Either the underlying plan section
-is too thin (fix the plan first), or the work needs to be split
-into smaller beans that *are* individually self-explanatory.
-
-This rule applies equally to follow-up beans created via the current
-Beans relationship flags — a bean filed mid-implementation must still
-stand alone, because whoever picks it up next won't have the
-discovering session's context.
-
-### Scope a bean to one logical unit of work
-
-A bean covers **one** subsection of the system, not a mixed bag.
+A task covers **one** subsection of the system, not a mixed bag.
 Examples of correctly-scoped units:
 
 - one page's UI update
@@ -249,11 +271,11 @@ Examples of correctly-scoped units:
 - one module's interface refactor
 - one parallel-package implementation
 
-If a bean touches two unrelated subsystems, requires two independent
-acceptance criteria, or has a body that reads "...and then
-also...", it should be split. Scope is bounded by the work, not by a
-line count — a single change that genuinely needs five pitfalls
-documented is still one bean.
+If a task touches two unrelated subsystems, requires two independent
+acceptance criteria, or has a body that reads "...and then also...",
+it should be split. Scope is bounded by the work, not by a line count
+-- a single change that genuinely needs five pitfalls documented is
+still one task.
 
 ## Use Makefile targets
 
@@ -263,7 +285,7 @@ target that does the same thing. Makefile targets encode
 project-specific flags, sequences, and conventions that raw commands
 may miss.
 
-If unsure whether a target exists, run `make help` or `grep` the
+If unsure whether a target exists, run `make help` or grep the
 Makefile.
 
 ## Test coverage required
@@ -280,7 +302,7 @@ Makefile.
 
 Default: **no agent/model attribution trailer**. Do NOT add
 `Co-Authored-By: Claude <noreply@anthropic.com>`,
-`Co-Authored-By: GPT-…`, or any other model/vendor trailer. The
+`Co-Authored-By: GPT-...`, or any other model/vendor trailer. The
 codebase author is the human owner; the underlying model is an
 implementation detail.
 
@@ -288,7 +310,7 @@ If this project has a bot persona (a real GitHub account with a
 `@users.noreply.github.com` email), document the required trailer
 here and install a `prepare-commit-msg` hook to enforce it. Example:
 
-```
+```text
 Co-authored-by: <bot-name> <bot-name@users.noreply.github.com>
 ```
 
@@ -309,10 +331,10 @@ cp -rf source dest          # NOT: cp -r source dest
 
 Other commands that may prompt:
 
-- `scp` — use `-o BatchMode=yes`
-- `ssh` — use `-o BatchMode=yes` to fail instead of prompting
-- `apt-get` — use `-y` flag
-- `brew` — use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+- `scp` -- use `-o BatchMode=yes`
+- `ssh` -- use `-o BatchMode=yes` to fail instead of prompting
+- `apt-get` -- use `-y` flag
+- `brew` -- use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
 ## Sanity check before committing
 
@@ -341,8 +363,8 @@ git config core.hooksPath scripts/githooks
 ```
 
 <!-- PROJECT: list what the hook actually checks (fmt drift,
-     plan-doc sync warning, plan-ref lint, …). The drift check is a
-     heuristic, not a proof — treat its warning as a question worth
+     plan-doc sync warning, plan-ref lint, ...). The drift check is a
+     heuristic, not a proof -- treat its warning as a question worth
      answering, not an obstacle to dismiss. -->
 
 ## Session completion ("Landing the Plane")
@@ -352,26 +374,26 @@ Work is NOT complete until `git push` succeeds.
 
 **MANDATORY WORKFLOW:**
 
-1. **File issues for remaining work** — Create beans for anything
-   that needs follow-up.
-2. **Run quality gates** (if code changed) — tests, linters, builds.
-3. **Update issue status** — Close finished work, update in-progress
+1. **File issues for remaining work** -- Create Backlog.md tasks for
+   anything that needs follow-up.
+2. **Run quality gates** (if code changed) -- tests, linters, builds.
+3. **Update issue status** -- Close finished work, update in-progress
    items.
-4. **PUSH TO REMOTE** — This is MANDATORY:
+4. **PUSH TO REMOTE** -- This is MANDATORY:
    ```bash
    git pull --rebase
    git push
    git status       # MUST show "up to date with origin"
    ```
-5. **Clean up** — Clear stashes, prune remote branches.
-6. **Verify** — All changes committed AND pushed.
-7. **Hand off** — Provide context for next session.
+5. **Clean up** -- Clear stashes, prune remote branches.
+6. **Verify** -- All changes committed AND pushed.
+7. **Hand off** -- Provide context for next session.
 
 **CRITICAL RULES:**
 
 - Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing — that leaves work stranded locally
-- NEVER say "ready to push when you are" — YOU must push
+- NEVER stop before pushing -- that leaves work stranded locally
+- NEVER say "ready to push when you are" -- YOU must push
 - If push fails, resolve and retry until it succeeds
 
 ---
@@ -383,37 +405,36 @@ have defaults baked in above; you only need to revisit them if you
 want to diverge.
 
 1. **Pick a license.** Add a `LICENSE` file at the repo root and
-   note the license in `README.md`. Until this exists the project
-   is "all rights reserved" by default, which blocks any external
+   note the license in `README.md`. Until this exists the project is
+   "all rights reserved" by default, which blocks any external
    contribution or reuse. Common choices: MIT or Apache-2.0
    (permissive), or a proprietary notice for internal-only repos.
-2. **Toolchain & build commands** — Replace the gates in
-   "Sanity check before committing" with this project's real
-   `fmt / build / test / lint` invocations (Cargo, uv/pytest, npm,
-   Go, …).
-3. **Pre-commit hook checks** — Fill in the `<!-- PROJECT: -->`
+2. **Toolchain & build commands** -- Replace the gates in "Sanity
+   check before committing" with this project's real `fmt / build /
+   test / lint` invocations (Cargo, uv/pytest, npm, Go, ...).
+3. **Pre-commit hook checks** -- Fill in the `<!-- PROJECT: -->`
    placeholder under "Pre-commit hooks" with what the hook actually
    runs.
-4. **Canonical user-doc filenames** — Below `docs/`, list the files
+4. **Canonical user-doc filenames** -- Below `docs/`, list the files
    that must stay in sync with code (e.g. `installation.md`,
    `getting-started.md`, `troubleshooting.md`, per-CLI-binary
    pages). The "Documentation must match code" section enumerates
    *categories* of changes; this list enumerates the *files*.
-5. **Configuration surface** — If the project has a runtime config
-   mechanism (`.env`, `config.toml`, env-var conventions),
-   document where tunables live vs. what stays in code/workflow.
-6. **Commit attribution trailer** — Only if this project has a real
+5. **Configuration surface** -- If the project has a runtime config
+   mechanism (`.env`, `config.toml`, env-var conventions), document
+   where tunables live vs. what stays in code/workflow.
+6. **Commit attribution trailer** -- Only if this project has a real
    bot GitHub account. Fill in the trailer under "Commit
    attribution" and install a `prepare-commit-msg` hook. Otherwise
    leave the default (no trailer).
-7. **Opt-in: Beans agent integrations** — Add editor or agent hooks
-   that run `beans prime` at session start, and copy any Beans plugin
-   files your team wants to standardize on.
-8. **Opt-in: plan-ref lint script** — If you want enforcement of the
-   `Plan:` line on every bean, ship `scripts/beans-plan-ref-lint.sh`
-   and wire it into preflight/CI. The *rule* is on by default; the
-   *enforcement script* is opt-in.
-9. **Opt-in: CONTRIBUTING.md** — Write one if this project warrants
+7. **Backlog.md agent integrations** -- Ensure editor or agent hooks
+   use the `backlog` MCP server or the Backlog.md CLI workflow, and
+   keep those hooks aligned with the current project setup.
+8. **Plan-reference lint script** -- If you want enforcement of the
+   `Plan:` line on every task, ship
+   `scripts/backlog-plan-ref-lint.sh` and wire it into preflight/CI.
+   The *rule* is on by default; the *enforcement script* is opt-in.
+9. **Opt-in: CONTRIBUTING.md** -- Write one if this project warrants
    a separate methodology doc (design-first pipeline, when each
    workflow step applies). Otherwise the pointer at the top of this
    file is a no-op.

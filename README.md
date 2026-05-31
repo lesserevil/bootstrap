@@ -18,9 +18,11 @@ you adapt it to your project.
 
 2. **Run `make init`.** Idempotent — safe to re-run.
    - `git init` (if the directory isn't already a git repo)
-   - checks that `beans` is installed and on `PATH` — errors
-     out with an install pointer if not
-   - `beans init` (creating `.beans/` and `.beans.yml`)
+   - checks that `bun` is installed and on `PATH` — errors out
+     with an install pointer if not
+   - runs Backlog.md from `github:lesserevil/Backlog.md`
+   - `backlog init` (creating `backlog/` and `backlog.config.yml`)
+     with non-interactive defaults
 
 3. **Ask an agent to customize the repo.** Point your agent at
    `AGENTS.md` § *Customize per project* — that section enumerates
@@ -42,6 +44,9 @@ you adapt it to your project.
 
 - `AGENTS.md` — operating rules (read this first)
 - `Makefile` — `make init` plus per-project quality-gate stubs
+- `backlog/` — Backlog.md tasks created by `make init`
+- `backlog.config.yml` — Backlog.md project config created by
+  `make init`
 - `docs/` — user-facing documentation
 - `plans/` — design docs and architecture notes
 - `scripts/githooks/` — pre-commit hook scaffolding

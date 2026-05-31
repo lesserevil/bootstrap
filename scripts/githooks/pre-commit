@@ -37,12 +37,13 @@ fi
 #     warn "code under src/ staged but no plans/*.md updated — confirm this is a non-design change"
 # fi
 
-# Plan-ref lint — every open bean carries a `Plan:` line (or an
-# exemption label). Opt-in; uncomment once the script is in place.
+# Plan-ref lint — every open Backlog.md task carries a `Plan:` line
+# or documentation reference, unless exempted. Opt-in; uncomment once
+# the script is in place.
 #
-# if [[ -x scripts/beans-plan-ref-lint.sh ]]; then
-#     scripts/beans-plan-ref-lint.sh --quiet || \
-#         warn "open beans missing 'Plan:' reference — run scripts/beans-plan-ref-lint.sh for details"
+# if [[ -x scripts/backlog-plan-ref-lint.sh ]]; then
+#     scripts/backlog-plan-ref-lint.sh --quiet || \
+#         warn "open Backlog.md tasks missing 'Plan:' reference — run scripts/backlog-plan-ref-lint.sh for details"
 # fi
 
 exit 0
