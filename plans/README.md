@@ -14,7 +14,7 @@ Plan docs are **not** "internal notes that can lag behind." For any
 class of work that goes through the design-first pipeline, the
 relevant plan doc is updated **before** or **alongside** the code
 change. See [`../AGENTS.md`](../AGENTS.md) for the full
-plans→Backlog.md tasks→code→plan-complete workflow.
+plans -> GitHub Issues -> code -> plan-complete workflow.
 
 ## Required shape for plan docs
 
@@ -35,10 +35,9 @@ Each item must be testable (a passing test, a CLI invocation with
 expected output, a manual procedure with a clear pass/fail). Vague
 criteria ("works well", "is robust") do not count.
 
-Each Backlog.md task opened against a plan must reference it in the
-task description or documentation field
-(`Plan: plans/<name>.md §<section>`) and should mirror the relevant
-acceptance criterion in everyday terms.
+Each GitHub issue opened against a plan must reference it in the
+issue body (`Plan: plans/<name>.md section <section>`) and should
+mirror the relevant acceptance criterion in everyday terms.
 
 ## Contents
 

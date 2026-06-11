@@ -8,10 +8,7 @@
 
 .PHONY: help init fmt fmt-check build test lint clean
 
-BACKLOG_SOURCE ?= github:lesserevil/Backlog.md
-BACKLOG_CLI ?= bun x --bun $(BACKLOG_SOURCE)
-BACKLOG_DIR ?= backlog
-BACKLOG_PROJECT_NAME ?= $(notdir $(CURDIR))
+GH ?= gh
 
 help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*?## "; printf "Usage: make <target>\n\nTargets:\n"} \
@@ -19,11 +16,11 @@ help: ## Show this help.
 		$(MAKEFILE_LIST)
 
 # ─── Bootstrap ────────────────────────────────────────────────────
-# `make init` brings a fresh checkout into a working state: git
-# repo and Backlog.md task tracker. Each step is idempotent — running
-# `make init` again is safe.
+# `make init` brings a fresh checkout into a working state: git repo
+# plus GitHub CLI checks. Each step is idempotent — running `make
+# init` again is safe.
 
-init: ## Initialize repo: git init and Backlog.md from lesserevil.
+init: ## Initialize repo: git init and GitHub CLI checks.
 	@set -e; \
 	if [ ! -d .git ]; then \
 		echo "[init] git init"; \
@@ -31,23 +28,24 @@ init: ## Initialize repo: git init and Backlog.md from lesserevil.
 	else \
 		echo "[init] git: already initialized"; \
 	fi; \
-	if ! command -v bun >/dev/null 2>&1; then \
-		echo "[init] bun not found on PATH."; \
-		echo "       Install Bun from https://bun.sh and re-run 'make init'."; \
-		echo "       Backlog.md is run from $(BACKLOG_SOURCE)."; \
+	if ! command -v "$(GH)" >/dev/null 2>&1; then \
+		echo "[init] gh not found on PATH."; \
+		echo "       Install GitHub CLI from https://cli.github.com and re-run 'make init'."; \
 		exit 1; \
 	else \
-		echo "[init] bun: $$(command -v bun)"; \
+		echo "[init] gh: $$($(GH) --version | head -n 1)"; \
 	fi; \
-	if [ ! -d "$(BACKLOG_DIR)" ] || { [ ! -f backlog.config.yml ] && [ ! -f "$(BACKLOG_DIR)/config.yml" ]; }; then \
-		echo "[init] backlog init ($(BACKLOG_SOURCE))"; \
-		$(BACKLOG_CLI) init "$(BACKLOG_PROJECT_NAME)" \
-			--defaults \
-			--backlog-dir "$(BACKLOG_DIR)" \
-			--config-location root \
-			--integration-mode none; \
+	if $(GH) auth status >/dev/null 2>&1; then \
+		echo "[init] gh auth: authenticated"; \
 	else \
-		echo "[init] backlog: already initialized ($(BACKLOG_DIR)/ and config present)"; \
+		echo "[init] gh auth: not authenticated"; \
+		echo "       Run 'gh auth login' before using GitHub Issues."; \
+	fi; \
+	if git remote get-url origin >/dev/null 2>&1; then \
+		echo "[init] git remote origin: $$(git remote get-url origin)"; \
+	else \
+		echo "[init] git remote origin: not set yet"; \
+		echo "       Add a GitHub remote before creating issues with gh."; \
 	fi
 
 # ─── Quality gates ────────────────────────────────────────────────

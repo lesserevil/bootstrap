@@ -9,73 +9,138 @@ session-close protocol. Read it before starting non-trivial work.
 > and takes precedence on workflow questions. This file enforces
 > consistency once code is being written.
 
-## Issue Tracking with Backlog.md
+## Issue Tracking with GitHub Issues
 
-This project uses **Backlog.md** for ALL task tracking. Backlog.md
-stores project work as Markdown files in the repo and should be
-managed through its MCP tools or CLI, not by hand-editing task files.
+This project uses **GitHub Issues** for ALL task tracking. Use the
+GitHub CLI (`gh`) for automation and the GitHub web UI only when the
+CLI cannot express the operation.
 
-Use the Backlog.md version from:
+Do not use Backlog.md, the `backlog` CLI, `bd`, beads, TodoWrite,
+TaskCreate, standalone markdown TODO lists, or another tracker for
+project work.
 
-```text
-https://github.com/lesserevil/Backlog.md
+### Prerequisites
+
+Agents need the GitHub CLI installed and authenticated:
+
+```bash
+gh --version
+gh auth status
+gh repo view --json nameWithOwner
 ```
+
+When running outside the repository root, pass the repository
+explicitly with `-R OWNER/REPO`.
 
 ### Quick reference
 
-Prefer MCP tools when the client provides them:
-
-```text
-get_backlog_instructions overview
-task_search / task_list
-task_view <id>
-task_create
-task_edit
-```
-
-Use the CLI when MCP tools are not available:
+Use non-interactive `gh` flags so commands never open an editor or
+prompt for body text:
 
 ```bash
-backlog task list --plain --status "To Do"       # Find available work
-backlog search "query" --plain                   # Search existing work
-backlog task <id> --plain                        # View task details
-backlog task create "Title" --status "To Do"     # Create tracked work
-backlog task edit <id> --status "In Progress"    # Claim work
-backlog task edit <id> --status "Done"           # Mark work done
-```
+gh issue list --state open --limit 50
+gh issue list --state open --search "clipboard in:title,body"
+gh issue view 123 --comments
 
-When using this bootstrap template itself, `make init` runs Backlog.md
-through Bun from `github:lesserevil/Backlog.md` so the requested fork
-is used even before a global `backlog` command exists.
+gh issue create \
+  --title "Issue title" \
+  --label "type:task" \
+  --label "priority:medium" \
+  --body-file - <<'EOF'
+WHAT TO DO
+Describe the concrete work.
+
+WHY
+Describe the user-visible behavior or design reason.
+
+HOW TO VERIFY
+List the command, test, or manual check that proves completion.
+EOF
+
+gh issue edit 123 --add-assignee "@me" --add-label "status:in-progress"
+gh issue comment 123 --body "Progress update"
+gh issue close 123 --reason completed --comment "Completed: summary of verification."
+```
 
 ### Rules
 
-- Use Backlog.md for ALL task tracking.
-- At the beginning of non-trivial work, load the Backlog.md workflow
-  guidance. With MCP, call `get_backlog_instructions` for the
-  overview. With CLI-only access, run `backlog --help` and inspect
-  the current task commands before filing or changing work.
-- Search for existing work before creating a new task.
-- Use `task_create` / `task_edit` MCP tools when available. If using
-  CLI, prefer `backlog task create`, `backlog task edit`,
-  `backlog task list --plain`, `backlog search --plain`, and
-  `backlog task <id> --plain` for machine-readable output.
-- Link dependent work with parent tasks or dependencies where
-  appropriate.
-- Do NOT use TodoWrite, TaskCreate, or standalone markdown TODO
-  lists outside Backlog.md.
+- Use GitHub Issues for ALL task tracking.
+- Search for existing work before creating a new issue.
+- Create follow-up work with `gh issue create`; include enough
+  context in the issue body for a future agent to complete it.
+- Link related issues with GitHub issue references such as `#123`,
+  `Parent: #123`, `Blocked by #123`, or task-list items in an epic
+  body.
+- Use `gh issue comment` for progress notes and handoffs.
+- Use `gh issue close --reason completed` only after the work is
+  verified and pushed.
 - Do NOT use `MEMORY.md` files -- they fragment across accounts.
-- Do NOT use commands that open `$EDITOR`; prefer non-interactive
-  Backlog.md commands and flags.
-- Do NOT edit task files directly. Use Backlog.md MCP tools or CLI so
-  metadata, relationships, and history stay consistent.
+- Do NOT use commands that open `$EDITOR`; use `--body`,
+  `--body-file`, `--title`, `--label`, and other non-interactive
+  flags.
 
-### Priorities
+### Labels and priorities
 
-Use the priority names configured by Backlog.md and shown by
-`backlog task create --help`, `backlog task edit --help`, or the MCP
-task schema. Do not assume project-specific priority names beyond
-what the tool reports.
+Use the repository's configured labels. If the project has no labels
+yet, create a small conventional set:
+
+```bash
+gh label create "type:task" --description "Implementation task" --color 5319E7
+gh label create "type:bug" --description "Something is broken" --color D73A4A
+gh label create "type:feature" --description "New user-visible behavior" --color A2EEEF
+gh label create "type:epic" --description "Parent issue for related work" --color 6F42C1
+gh label create "type:chore" --description "Maintenance or tooling" --color C5DEF5
+gh label create "priority:high" --description "Important or urgent" --color B60205
+gh label create "priority:medium" --description "Default priority" --color FBCA04
+gh label create "priority:low" --description "Polish or future work" --color 0E8A16
+gh label create "status:ready" --description "Ready for implementation" --color 0E8A16
+gh label create "status:in-progress" --description "Currently being worked" --color FBCA04
+gh label create "status:blocked" --description "Blocked by dependency or decision" --color D73A4A
+gh label create "status:review" --description "Implemented and awaiting review" --color 1D76DB
+```
+
+Before using project-specific priority names, inspect the repo:
+
+```bash
+gh label list --search "priority:"
+```
+
+### Epics
+
+Represent an epic as a normal GitHub issue labeled `type:epic`.
+Its body should explain the goal and include a child issue checklist:
+
+```markdown
+## Child Issues
+
+- [ ] #124 Implement native clipboard envelope
+- [ ] #125 Implement web clipboard envelope
+```
+
+Create child issues with a clear parent reference in the body:
+
+```bash
+gh issue create \
+  --title "Implement native clipboard envelope" \
+  --label "type:task" \
+  --body-file - <<'EOF'
+Parent: #123
+
+WHAT TO DO
+Implement the native client clipboard envelope.
+
+WHY
+This completes one independently reviewable slice of the epic.
+
+HOW TO VERIFY
+Run the native unit tests and the loopback integration test.
+EOF
+```
+
+If GitHub native sub-issues are enabled for the repository, you may
+use them in the web UI or with `gh api`, but still mirror the parent
+relationship in the issue body so the linkage is visible to every
+agent.
 
 ## Documentation must match code
 
@@ -127,7 +192,7 @@ does inside, or what it should do," it goes in `plans/`.
 When creating diagrams in documentation, **always use Mermaid**
 (```mermaid code blocks). Never use ASCII art diagrams.
 
-## Plans -> Backlog.md tasks -> code -> plan-complete
+## Plans -> GitHub Issues -> code -> plan-complete
 
 All non-trivial work follows this loop:
 
@@ -136,25 +201,25 @@ All non-trivial work follows this loop:
    include an explicit "Acceptance Criteria" section** -- a testable,
    enumerated definition of what "this plan is complete" means. If
    you cannot write that section, the plan isn't ready and you
-   should not create tasks against it yet.
+   should not create issues against it yet.
 
-2. **Generate Backlog.md tasks from the plan.** Break the plan into
-   `backlog task create` work items, or use the Backlog.md MCP
-   `task_create` tool. Every task **MUST reference its plan doc** in
-   its description or documentation field (path + section, e.g.
-   `Plan: plans/feature-x-plan.md §5 Data Channel Protocol`). Mirror
-   the relevant acceptance criterion in the task's acceptance
-   criteria.
+2. **Generate GitHub issues from the plan.** Break the plan into
+   `gh issue create` work items. Every issue **MUST reference its
+   plan doc** in the body (path + section, e.g.
+   `Plan: plans/feature-x-plan.md section 5 Data Channel Protocol`).
+   Mirror the relevant acceptance criterion in the issue's
+   acceptance criteria.
 
 3. **Agents claim and execute.** Standard flow is:
-   search/list ready work -> view task details -> set the task to
-   `In Progress` -> implement -> verify -> set the task to `Done`.
-   Code commits update the plan doc in the same commit when behavior
-   shifts.
+   search/list ready work -> view issue details -> assign the issue
+   to yourself and mark it in progress with the repo's status label
+   or project field -> implement -> verify -> close the issue when
+   done. Code commits update the plan doc in the same commit when
+   behavior shifts.
 
 4. **Close the plan when criteria are met.** A plan is **not**
-   complete just because its tasks are done -- the acceptance
-   criteria are the gate. Once every task is done AND every
+   complete just because its issues are closed -- the acceptance
+   criteria are the gate. Once every issue is closed AND every
    acceptance item is demonstrably satisfied, mark the plan complete
    (status header or `Status: Complete` line at the top).
 
@@ -174,15 +239,15 @@ Each item must be testable (a passing test, a CLI invocation with
 expected output, a manual procedure with a clear pass/fail). Vague
 criteria ("works well", "is robust") do not count.
 
-### Backlog.md task -> plan linkage -- required shape
+### GitHub issue -> plan linkage -- required shape
 
 ```bash
-backlog task create "Implement CBOR clipboard envelope on native client" \
-  --status "To Do" \
-  --priority high \
-  --doc plans/clipboard-sync-plan.md \
-  --description "$(cat <<'EOF'
-Plan: plans/clipboard-sync-plan.md §5. Replaces the simplified ClipboardMessage with the ClipboardUpdate/Request/Clear/Chunk envelope.
+gh issue create \
+  --title "Implement CBOR clipboard envelope on native client" \
+  --label "type:task" \
+  --label "priority:high" \
+  --body-file - <<'EOF'
+Plan: plans/clipboard-sync-plan.md section 5. Replaces the simplified ClipboardMessage with the ClipboardUpdate/Request/Clear/Chunk envelope.
 
 WHAT TO DO
 Implement the native client clipboard envelope while preserving the existing public command surface.
@@ -195,42 +260,40 @@ Run the native unit tests and the loopback integration test in tests/e2e.
 
 EDGE CASES AND PITFALLS
 Preserve echo suppression and sequence-number handling.
+
+## Acceptance Criteria
+
+- [ ] Native client emits and accepts ClipboardUpdate with seq numbers.
+- [ ] Loopback e2e test passes.
 EOF
-)" \
-  --ac "Native client emits and accepts ClipboardUpdate with seq numbers." \
-  --ac "Loopback e2e test passes."
 ```
 
-The `Plan:` line or documentation field is mandatory. Tasks carrying
-one of the exemption labels skip the requirement: `infra`,
-`tooling`, `meta`, `no-plan-required`.
+The `Plan:` line is mandatory. Issues carrying one of the exemption
+labels skip the requirement: `infra`, `tooling`, `meta`,
+`no-plan-required`.
 
-If this project ships `scripts/backlog-plan-ref-lint.sh`, wire it
-into preflight or CI:
+If this project ships a GitHub issue plan-reference lint script, wire
+it into preflight or CI.
 
-```bash
-scripts/backlog-plan-ref-lint.sh --quiet || exit 1
-```
+### GitHub issues must stand alone -- required completeness
 
-### Backlog.md tasks must stand alone -- required completeness
-
-**Every task MUST be written for a naive but competent junior
+**Every issue MUST be written for a naive but competent junior
 developer.** Assume that developer can write the language, run the
 standard toolchain, and read anything checked into the repo --
 `AGENTS.md`, `README.md`, the `Makefile`, the source tree. Do **not**
-assume they have read the plan doc, prior tasks, or any conversation
-that led to this task being filed. The task must remove all ambiguity
+assume they have read the plan doc, prior issues, or any conversation
+that led to this issue being filed. The issue must remove all ambiguity
 about scope and required work: if a competent reader could plausibly
-interpret the body two different ways, the task is not ready.
+interpret the body two different ways, the issue is not ready.
 
-The task body must contain enough context that such a developer could
-execute the task end-to-end **without consulting a senior developer,
-the plan doc, other tasks, or any out-of-band knowledge**. The
-mandatory `Plan: plans/<doc>.md §N` reference is for *traceability*
+The issue body must contain enough context that such a developer
+could execute the work end-to-end **without consulting a senior
+developer, the plan doc, other issues, or any out-of-band knowledge**.
+The mandatory `Plan: plans/<doc>.md section N` reference is for *traceability*
 (where did this work originate), not *delegation* (go read the plan
 to figure out what to do).
 
-A junior developer reading the task in isolation must already know:
+A junior developer reading the issue in isolation must already know:
 
 - **What to do** -- concrete files, packages, functions, or commands
   to create or modify. Name them.
@@ -244,25 +307,26 @@ A junior developer reading the task in isolation must already know:
   function signature so existing callers compile unchanged"; "the
   stub is allowed to return a `not implemented` error at runtime but
   must still compile under all supported targets."
-- **Project-specific terminology** -- if the task uses a term that
+- **Project-specific terminology** -- if the issue uses a term that
   only makes sense in context (a milestone name, a pattern coined in
   the plan, an internal package nickname), explain it inline or
   paraphrase the relevant plan passage. Do not assume the reader
   will follow the `Plan:` link.
 
-If you cannot write a body at that level of completeness, the task
+If you cannot write a body at that level of completeness, the issue
 is not ready to file. Either the underlying plan section is too thin
 (fix the plan first), or the work needs to be split into smaller
-tasks that are individually self-explanatory.
+issues that are individually self-explanatory.
 
-This rule applies equally to follow-up tasks created through the
-current Backlog.md relationship flags -- a task filed
-mid-implementation must still stand alone, because whoever picks it
-up next won't have the discovering session's context.
+This rule applies equally to follow-up issues created
+mid-implementation -- an issue filed during discovery must still
+stand alone, because whoever picks it up next will not have the
+discovering session's context.
 
-### Scope a Backlog.md task to one logical unit of work
+### Scope a GitHub issue to one logical unit of work
 
-A task covers **one** subsection of the system, not a mixed bag.
+A GitHub issue covers **one** subsection of the system, not a mixed
+bag.
 Examples of correctly-scoped units:
 
 - one page's UI update
@@ -271,11 +335,11 @@ Examples of correctly-scoped units:
 - one module's interface refactor
 - one parallel-package implementation
 
-If a task touches two unrelated subsystems, requires two independent
+If an issue touches two unrelated subsystems, requires two independent
 acceptance criteria, or has a body that reads "...and then also...",
 it should be split. Scope is bounded by the work, not by a line count
 -- a single change that genuinely needs five pitfalls documented is
-still one task.
+still one issue.
 
 ## Use Makefile targets
 
@@ -374,7 +438,7 @@ Work is NOT complete until `git push` succeeds.
 
 **MANDATORY WORKFLOW:**
 
-1. **File issues for remaining work** -- Create Backlog.md tasks for
+1. **File issues for remaining work** -- Create GitHub issues for
    anything that needs follow-up.
 2. **Run quality gates** (if code changed) -- tests, linters, builds.
 3. **Update issue status** -- Close finished work, update in-progress
@@ -427,12 +491,12 @@ want to diverge.
    bot GitHub account. Fill in the trailer under "Commit
    attribution" and install a `prepare-commit-msg` hook. Otherwise
    leave the default (no trailer).
-7. **Backlog.md agent integrations** -- Ensure editor or agent hooks
-   use the `backlog` MCP server or the Backlog.md CLI workflow, and
-   keep those hooks aligned with the current project setup.
+7. **GitHub Issues agent integrations** -- Ensure editor or agent
+   hooks use `gh issue` or the GitHub API for task tracking, and keep
+   those hooks aligned with the current project setup.
 8. **Plan-reference lint script** -- If you want enforcement of the
-   `Plan:` line on every task, ship
-   `scripts/backlog-plan-ref-lint.sh` and wire it into preflight/CI.
+   `Plan:` line on every issue, ship a GitHub issue plan-reference
+   lint script and wire it into preflight/CI.
    The *rule* is on by default; the *enforcement script* is opt-in.
 9. **Opt-in: CONTRIBUTING.md** -- Write one if this project warrants
    a separate methodology doc (design-first pipeline, when each
